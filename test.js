@@ -1,97 +1,86 @@
-(function () {
-  var favoritesE = ajax('/Alakerta/favorites/detailed')
+(function() {
+    var favoritesE = ajax('/Alakerta/favorites/detailed')
 
-  favoritesE.onValue(function (favorites) {
-    $('#favorites').html(favorites.map(function (favorite) {
-      return '<li class="favorite">' + favorite.title + '</li>'
-    }))
-  })
-
-  var initialStateE = ajax('/Alakerta/state').combine(favoritesE, function (state, favorites) {
-    var currentFavorite = favorites.find(function (favorite) {
-      return favorite.uri === state.currentTrack.uri
+    favoritesE.onValue(function(favorites) {
+        $('#favorites').html(favorites.map(function(favorite) {
+            return '<li class="favorite">' + favorite.title + '</li>'
+        }))
     })
 
-    return {
-      playing: currentFavorite && state.playbackState === "PLAYING",
-      currentFavorite: currentFavorite
+    var selectFavoriteE = $('ul').asEventStream('click', '.favorite')
+        .map(function(event) {
+            return $(event.target).text()
+        })
+        .flatMapLatest(function(favorite) {
+            return ajax('/Alakerta/favorite/' + favorite).map(favorite)
+        })
+
+    var clickPlayE = $('.play-pause').asEventStream('click').map($target)
+        .map(function(t) {
+            return !t.hasClass('pause')
+        })
+        .flatMapLatest(function(play) {
+            return ajax('/Alakerta/' + (play ? 'play' : 'pause')).map(play)
+        })
+
+    var serverStateP = Bacon.once('init').concat(selectFavoriteE.merge(clickPlayE)).throttle(1000)
+        .flatMapLatest(function() {
+            return ajax('/Alakerta/state')
+        }).combine(favoritesE, function(state, favorites) {
+            return {
+                playing: state.playbackState === "PLAYING",
+                currentFavorite: favorites.find(function(favorite) {
+                    return favorite.uri === state.currentTrack.uri
+                })
+            }
+        })
+
+    serverStateP.onValue(function(state) {
+        $('.play-pause').toggleClass('pause', state.playing)
+        $('.favorite').removeClass('selected')
+        state.currentFavorite &&
+            state.currentFavorite.title &&
+            favoriteDom(state.currentFavorite.title).addClass('selected')
+    })
+
+    var volumeUpE = $('.volume-up').asEventStream('click').map($target)
+        .flatMap(function(t) {
+            return ajax('/Alakerta/volume/+3')
+        })
+        .onValue(function() {})
+
+    var volumeDownE = $('.volume-down').asEventStream('click').map($target)
+        .flatMap(function(t) {
+            return ajax('/Alakerta/volume/-3')
+        })
+        .onValue(function() {})
+
+    var $controls = $('.control')
+
+    $controls.asEventStream('mousedown').map($target).onValue(function(t) {
+        t.addClass('click')
+    })
+
+    $controls.asEventStream('mouseup').map($target)
+        .onValue(function(t) {
+            t.removeClass('click')
+        })
+
+    function ajax(url) {
+        return Bacon.fromPromise($.ajax({
+            url: url,
+            dataType: 'json'
+        }))
     }
-  }).toEventStream()
 
-  var favoriteSelectionE = $('ul').asEventStream('click', '.favorite')
-    .map(function (event) {
-      return $(event.target).text()
-    })
-    .flatMapLatest(function (favorite) {
-      return ajax('/Alakerta/favorite/' + favorite).map(favorite)
-    })
-    .combine(favoritesE, function (favorite, favorites) {
-      return favorites.find(function (f) {
-        return f.title === favorite
-      })
-    }).toEventStream()
+    function favoriteDom(name) {
+        return $('.favorite').filter(function() {
+            return $(this).text() === name;
+        });
+    }
 
-  var favoriteP = initialStateE
-    .map(function (state) {
-      return state.currentFavorite
-    })
-    .merge(favoriteSelectionE)
-    .onValue(function (favorite) {
-      $('.favorite').removeClass('selected')
-      favorite && favorite.title && favoriteDom(favorite.title).addClass('selected')
-    })
-
-  var $controls = $('.control')
-
-  $controls.asEventStream('mousedown').map($target).onValue(function(t) {
-    t.addClass('click')
-  })
-
-  $controls.asEventStream('mouseup').map($target).onValue(function(t) {
-    t.removeClass('click')
-  })
-
-  var playE = $('.play-pause').asEventStream('click').map($target)
-    .map(function (t) {
-      return t.hasClass('pause')
-    })
-    .flatMapLatest(function (play) {
-      return ajax('/Alakerta/' + (play ? 'play' : 'pause')).map(!play)
-    })
-
-  var playingP = initialStateE
-    .map(function (state) {
-      return state.playing
-    })
-    .merge(playE)
-    .onValue(function (play) {
-      $('.play-pause').toggleClass('pause', play)
-    })
-
-  var volumeUpE = $('.volume-up').asEventStream('click').map($target)
-    .flatMap(function (t) {
-      return ajax('/Alakerta/volume/+3')
-    }).onValue(function() {})
-
-  var volumeDownE = $('.volume-down').asEventStream('click').map($target)
-    .flatMap(function (t) {
-      return ajax('/Alakerta/volume/-3')
-    }).onValue(function() {})
-
-  function ajax(url) {
-    console.log("get: " + url)
-    return Bacon.fromPromise($.ajax({url: url, dataType: 'json'}))
-  }
-
-  function favoriteDom(name) {
-    return $('.favorite').filter(function () {
-      return $(this).text() === name;
-    });
-  }
-
-  function $target(e) {
-    return $(e.target)
-  }
+    function $target(e) {
+        return $(e.target)
+    }
 
 })()
-
