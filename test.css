@@ -50,7 +50,7 @@ h5 {
 }
 
 .control.click {
-    color: black;
+    color: white;
     background: black;
 }
 
@@ -71,6 +71,10 @@ h5 {
     left: 20px;
 }
 
+.play-pause.click:not(.pause):before {
+    border-left: 29px solid white;
+}
+
 .play-pause.pause:before {
     width: 6px;
     height: 30px;
@@ -89,5 +93,9 @@ h5 {
     content: "";
     top: 14px;
     left: 33px;
+}
+
+.play-pause.pause.click:before, .play-pause.pause.click:after {
+    background: white;
 }
 

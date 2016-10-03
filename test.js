@@ -41,8 +41,17 @@
       favorite && favorite.title && favoriteDom(favorite.title).addClass('selected')
     })
 
-  var playClickE = $('.play-pause').asEventStream('click')
-    .map($target)
+  var $controls = $('.control')
+
+  $controls.asEventStream('mousedown').map($target).onValue(function(t) {
+    t.addClass('click')
+  })
+
+  $controls.asEventStream('mouseup').map($target).onValue(function(t) {
+    t.removeClass('click')
+  })
+
+  var playE = $('.play-pause').asEventStream('click').map($target)
     .map(function (t) {
       return t.hasClass('pause')
     })
@@ -54,19 +63,17 @@
     .map(function (state) {
       return state.playing
     })
-    .merge(playClickE)
+    .merge(playE)
     .onValue(function (play) {
       $('.play-pause').toggleClass('pause', play)
     })
 
-  var volumeUpE = $('.volume-up').asEventStream('click')
-    .map($target)
+  var volumeUpE = $('.volume-up').asEventStream('click').map($target)
     .flatMap(function (t) {
       return ajax('/Alakerta/volume/+3')
     }).onValue(function() {})
 
-  var volumeDownE = $('.volume-down').asEventStream('click')
-    .map($target)
+  var volumeDownE = $('.volume-down').asEventStream('click').map($target)
     .flatMap(function (t) {
       return ajax('/Alakerta/volume/-3')
     }).onValue(function() {})
