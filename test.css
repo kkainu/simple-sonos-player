@@ -1,69 +1,74 @@
 body {
-  font-family: Open Sans,sans-serif;
+    font-family: Open Sans, sans-serif;
 }
 
 ul {
-  list-style-type: none;
-  margin: 0;
-  padding-left: 0;
+    list-style-type: none;
+    margin: 0;
+    padding-left: 0;
 }
 
 li {
-  line-height: 60px;
-  cursor: pointer;
-  border: 1px solid;
-  margin-bottom: 5px;
-  padding-left: 10px;
-  border-radius: 5px;
-  color: lightgrey;
+    line-height: 60px;
+    cursor: pointer;
+    border: 1px solid;
+    margin-bottom: 5px;
+    padding-left: 10px;
+    border-radius: 5px;
+    color: lightgrey;
 }
 
 li.selected {
-  color: black;
+    color: black;
 }
 
 h5 {
-  margin: 10px 0;
+    margin: 10px 0;
 }
 
 .controls {
-  margin-top: 10px;
-  border: 1px solid darkgray;
-  border-radius: 4px;
-  padding: 5px 0;
-  vertical-align: middle;
-  text-align: center;
+    margin-top: 10px;
+    border: 1px solid darkgray;
+    border-radius: 4px;
+    padding: 5px 0;
+    vertical-align: middle;
+    text-align: center;
 }
 
 .control {
-  position: relative;
-  display: inline-block;
-  height: 60px;
-  width: 60px;
-  border: 1px solid darkgray;
-  border-radius: 30px;
-  text-align: center;
-  line-height: 58px;
-  font-size: 37px;
-  font-weight: 200;
-  vertical-align: middle;
+    position: relative;
+    display: inline-block;
+    height: 60px;
+    width: 60px;
+    border: 1px solid darkgray;
+    border-radius: 30px;
+    text-align: center;
+    line-height: 58px;
+    font-size: 37px;
+    font-weight: 200;
+    vertical-align: middle;
+}
+
+.control.click {
+    color: black;
+    background: black;
 }
 
 .control:not(:last-child) {
-  margin-right: 10px;
+    margin-right: 10px;
 }
 
 .play-pause:not(.pause):before {
-  content: "";
-  width: 0;
-  height: 0;
-  border-top: 18px solid transparent;
-  border-bottom: 18px solid transparent;
-  border-left: 29px solid black;
-  display: block;
-  position: relative;
-  top: 12px;
-  left: 20px;
+    content: "";
+    width: 0;
+    height: 0;
+    border-top: 18px solid transparent;
+    border-bottom: 18px solid transparent;
+    border-left: 29px solid black;
+    display: block;
+    position: relative;
+    top: 12px;
+    left: 20px;
 }
 
 .play-pause.pause:before {
@@ -75,7 +80,7 @@ h5 {
     top: 14px;
     left: 21px;
 }
- 
+
 .play-pause.pause:after {
     width: 6px;
     height: 30px;
