@@ -8,7 +8,7 @@ ul {
     padding-left: 0;
 }
 
-li {
+.favorite {
     line-height: 60px;
     cursor: pointer;
     border: 1px solid;
@@ -16,9 +16,10 @@ li {
     padding-left: 10px;
     border-radius: 5px;
     color: lightgrey;
+    position: relative;
 }
 
-li.selected {
+.favorite.selected {
     color: black;
 }
 
@@ -97,5 +98,26 @@ h5 {
 
 .play-pause.pause.click:before, .play-pause.pause.click:after {
     background: white;
+}
+
+.spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background-color: #333;
+  border-radius: 100%;
+  -webkit-animation: sk-scaleout 1.0s infinite ease-in-out;
+  float: right;
+  position: absolute;
+  right: 10px;
+  top: 20px;
+}
+
+@-webkit-keyframes sk-scaleout {
+  0% { -webkit-transform: scale(0) }
+  100% {
+    -webkit-transform: scale(1.0);
+    opacity: 0;
+  }
 }
 
