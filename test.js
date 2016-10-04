@@ -1,86 +1,53 @@
-(function() {
-    var favoritesE = ajax('/Alakerta/favorites/detailed')
+(function () {
 
-    favoritesE.onValue(function(favorites) {
-        $('#favorites').html(favorites.map(function(favorite) {
-            return '<li class="favorite">' + favorite.title + '</li>'
-        }))
+  const ajax = (url) => Bacon.fromPromise($.ajax({
+    url: url,
+    dataType: 'json'
+  }))
+
+  const $controls = $('.control')
+  const favoriteFromDom = name => $('.favorite').filter(() => $(this).text() === name)
+  const $target = e => $(e.target)
+  const favoritesE = ajax('/Alakerta/favorites/detailed')
+
+  const volumeUpE = $('.volume-up').asEventStream('click').map($target)
+    .flatMap(() => ajax('/Alakerta/volume/+3'))
+    .onValue(() => {
     })
 
-    var selectFavoriteE = $('ul').asEventStream('click', '.favorite')
-        .map(function(event) {
-            return $(event.target).text()
-        })
-        .flatMapLatest(function(favorite) {
-            return ajax('/Alakerta/favorite/' + favorite).map(favorite)
-        })
-
-    var clickPlayE = $('.play-pause').asEventStream('click').map($target)
-        .map(function(t) {
-            return !t.hasClass('pause')
-        })
-        .flatMapLatest(function(play) {
-            return ajax('/Alakerta/' + (play ? 'play' : 'pause')).map(play)
-        })
-
-    var serverStateP = Bacon.once('init').concat(selectFavoriteE.merge(clickPlayE)).throttle(1000)
-        .flatMapLatest(function() {
-            return ajax('/Alakerta/state')
-        }).combine(favoritesE, function(state, favorites) {
-            return {
-                playing: state.playbackState === "PLAYING",
-                currentFavorite: favorites.find(function(favorite) {
-                    return favorite.uri === state.currentTrack.uri
-                })
-            }
-        })
-
-    serverStateP.onValue(function(state) {
-        $('.play-pause').toggleClass('pause', state.playing)
-        $('.favorite').removeClass('selected')
-        state.currentFavorite &&
-            state.currentFavorite.title &&
-            favoriteDom(state.currentFavorite.title).addClass('selected')
+  const volumeDownE = $('.volume-down').asEventStream('click').map($target)
+    .flatMap(() => ajax('/Alakerta/volume/-3'))
+    .onValue(() => {
     })
 
-    var volumeUpE = $('.volume-up').asEventStream('click').map($target)
-        .flatMap(function(t) {
-            return ajax('/Alakerta/volume/+3')
-        })
-        .onValue(function() {})
+  const selectFavoriteE = $('ul').asEventStream('click', '.favorite')
+    .map(event => $(event.target).text())
+    .flatMapLatest(favorite => ajax('/Alakerta/favorite/' + favorite).map(favorite))
 
-    var volumeDownE = $('.volume-down').asEventStream('click').map($target)
-        .flatMap(function(t) {
-            return ajax('/Alakerta/volume/-3')
-        })
-        .onValue(function() {})
+  const clickPlayE = $('.play-pause').asEventStream('click').map($target)
+    .map(t => !t.hasClass('pause'))
+    .flatMapLatest(play => ajax('/Alakerta/' + (play ? 'play' : 'pause')).map(play))
 
-    var $controls = $('.control')
+  const serverStateP = Bacon.once('init').concat(selectFavoriteE.merge(clickPlayE)).throttle(1000)
+    .flatMapLatest(() =>  ajax('/Alakerta/state'))
+    .combine(favoritesE, (state, favorites) => ({
+        playing: state.playbackState === "PLAYING",
+        currentFavorite: favorites.find(favorite => favorite.uri === state.currentTrack.uri)
+      })
+    )
 
-    $controls.asEventStream('mousedown').map($target).onValue(function(t) {
-        t.addClass('click')
-    })
+  favoritesE.onValue(function (favorites) {
+    $('#favorites').html(favorites.map(favorite => '<li class="favorite">' + favorite.title + '</li>'))
+  })
 
-    $controls.asEventStream('mouseup').map($target)
-        .onValue(function(t) {
-            t.removeClass('click')
-        })
+  serverStateP.onValue( state => {
+    $('.play-pause').toggleClass('pause', state.playing)
+    $('.favorite').removeClass('selected')
+    state.currentFavorite &&
+    state.currentFavorite.title &&
+    favoriteFromDom(state.currentFavorite.title).addClass('selected')
+  })
 
-    function ajax(url) {
-        return Bacon.fromPromise($.ajax({
-            url: url,
-            dataType: 'json'
-        }))
-    }
-
-    function favoriteDom(name) {
-        return $('.favorite').filter(function() {
-            return $(this).text() === name;
-        });
-    }
-
-    function $target(e) {
-        return $(e.target)
-    }
-
+  $controls.asEventStream('mousedown').map($target).onValue(t => t.addClass('click'))
+  $controls.asEventStream('mouseup').map($target).onValue(t => t.removeClass('click'))
 })()
