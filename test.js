@@ -30,13 +30,19 @@
 
   const selectFavoriteE = $('ul').asEventStream('click', '.favorite')
     .map($target)
-    .doAction((t) => t.append(spinner))
+    .doAction(t => t.append(spinner))
+    .doAction(t => {
+      $('.favorite').removeClass('selected')
+      t.addClass('selected')
+      $('.eq').remove()
+    })
     .map(t => t.text())
     .flatMapLatest(favorite => ajax('/Alakerta/favorite/' + favorite))
 
   const clickPlayE = $('.play-pause').asEventStream('click')
     .map($target)
-    .map(t => !t.hasClass('pause'))
+    .doAction(t => t.toggleClass('pause', !t.hasClass('pause')))
+    .map(t => t.hasClass('pause'))
     .flatMapLatest(play => ajax('/Alakerta/' + (play ? 'play' : 'pause')))
 
   const serverStateP = Bacon.once('init').concat(selectFavoriteE.merge(clickPlayE)).throttle(1000)
