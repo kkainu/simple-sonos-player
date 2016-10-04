@@ -45,13 +45,26 @@
     .map(t => t.hasClass('pause'))
     .flatMapLatest(play => ajax('/Alakerta/' + (play ? 'play' : 'pause')))
 
-  const serverStateP = Bacon.once('init').concat(selectFavoriteE.merge(clickPlayE)).throttle(1000)
+  const serverStateP = Bacon.once('init')
+    .concat(selectFavoriteE.merge(clickPlayE))
+    .throttle(1000)
+    .merge(Bacon.interval(10000, true))
     .flatMapLatest(() =>  ajax('/Alakerta/state'))
     .combine(favoritesE, (state, favorites) => ({
         playing: state.playbackState === "PLAYING",
-        currentFavorite: favorites.find(favorite => favorite.uri === state.currentTrack.uri)
+        currentFavorite: favorites.find(favorite => favorite.uri === state.currentTrack.uri),
+        artist: state.currentTrack.artist,
+        title: state.currentTrack.title
       })
     ).log("server state")
+
+  const nowPlaying = state => {
+    if (state.currentFavorite) {
+      $('.now-playing').text(state.currentFavorite.title)
+    } else if (state.artist && state.title) {
+      $('.now-playing').text(state.artist + " - " + state.title)
+    }
+  }
 
   favoritesE.onValue(function (favorites) {
     $('#favorites').html(favorites.map(favorite => $('<li class="favorite" />').text(favorite.title)))
@@ -67,6 +80,7 @@
 
     $selected && state.playing && $selected.append(eq)
     $selected && $selected.addClass('selected')
+    nowPlaying(state)
   })
 
   $controls.asEventStream('mousedown').map($target).onValue(t => t.addClass('click'))
