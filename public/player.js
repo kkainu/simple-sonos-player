@@ -5,7 +5,7 @@
     dataType: 'json'
   }))
 
-  const ws = io('http://localhost:3000')
+  const ws = io('http://10.0.1.30:3000')
 
   const favoriteFromDom = name => $('.favorite').filter((i, e) => $(e).text() === name)
   const $target = e => $(e.target)
