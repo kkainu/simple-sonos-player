@@ -41,7 +41,7 @@
       $('.eq').remove()
     })
     .doAction(t => t.addClass('selected'))
-    .map(t => t.text()).log("spinner")
+    .map(t => t.text())
     .flatMapLatest(favorite => ajax('/Alakerta/favorite/' + favorite))
 
   const clickPlayE = $('.play-pause').asEventStream('click')
@@ -49,7 +49,7 @@
     .map(t => !t.hasClass('pause'))
     .flatMapLatest(play => ajax('/Alakerta/' + (play ? 'play' : 'pause')))
 
-  const serverMessages = Bacon.fromBinder(sink => ws.on('message', message => sink(message))).log('serverMessages')
+  const serverMessages = Bacon.fromBinder(sink => ws.on('message', message => sink(message)))
 
   const serverStateP = favoritesE.flatMap(() => ajax('/Alakerta/state'))
     .concat(selectFavoriteE.merge(clickPlayE).merge(serverMessages)
@@ -59,7 +59,7 @@
       currentFavorite: favorites.find(favorite => favorite.uri === state.currentTrack.uri),
       artist: state.currentTrack.artist,
       title: state.currentTrack.title
-    })).log("server state")
+    }))
 
   const nowPlaying = state => {
     if (state.currentFavorite) {
