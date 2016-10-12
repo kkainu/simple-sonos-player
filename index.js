@@ -3,15 +3,10 @@ const app     = express();
 const server  = require('http').createServer(app);
 const io      = require('socket.io')(server)
 
-app.use(express.static('public'))
-
-app.get('/hello', (req, res) => {
-  io.emit('message', 'hello')
-  res.sendStatus(200)
-})
+app.use(express.static(__dirname + '/public'))
 
 app.post('/sonos-webhook', (req, res) => {
-  io.emit('message', 'sonos here!!!!')
+  io.emit('message', 'Sonos state changed.')
   res.sendStatus(200)
 })
 
