@@ -30,23 +30,29 @@
     .onValue(() => {
     })
 
-  const clickFavoriteE = $('ul').asEventStream('click', '.favorite')
+  const selectFavoriteE = $('ul').asEventStream('click', '.favorite')
     .map($target)
-    .doAction(t => t.append(spinner))
-    .map(t => t.text())
-
-  const selectFavoriteE = clickFavoriteE.flatMapLatest(favorite => ajax('/Alakerta/favorite/' + favorite)).onValue(() => {})
+    .doAction(t => {
+      $('.now-playing').append(spinner)
+      $('.favorite').removeClass('selected')
+      t.addClass('.selected')
+      $('.play-pause').toggleClass('pause', false)
+      $('.now-playing .title').text('...')
+      $('.eq').remove()
+    })
+    .doAction(t => t.addClass('selected'))
+    .map(t => t.text()).log("spinner")
+    .flatMapLatest(favorite => ajax('/Alakerta/favorite/' + favorite))
 
   const clickPlayE = $('.play-pause').asEventStream('click')
     .map($target)
     .map(t => !t.hasClass('pause'))
+    .flatMapLatest(play => ajax('/Alakerta/' + (play ? 'play' : 'pause')))
 
-  const sendPlayE = clickPlayE.flatMapLatest(play => ajax('/Alakerta/' + (play ? 'play' : 'pause'))).onValue(() => {})
-
-  const serverMessages = Bacon.fromBinder(sink => ws.on('message', message => sink(message)))
+  const serverMessages = Bacon.fromBinder(sink => ws.on('message', message => sink(message))).log('serverMessages')
 
   const serverStateP = favoritesE.flatMap(() => ajax('/Alakerta/state'))
-    .concat(clickFavoriteE.merge(clickPlayE).merge(serverMessages)
+    .concat(selectFavoriteE.merge(clickPlayE).merge(serverMessages)
       .flatMapLatest(() => ajax('/Alakerta/state'))
     ).combine(favoritesE, (state, favorites) => ({
       playing: state.playbackState === "PLAYING",
@@ -57,9 +63,9 @@
 
   const nowPlaying = state => {
     if (state.currentFavorite) {
-      $('.now-playing').text(state.currentFavorite.title)
+      $('.now-playing .title').text(state.currentFavorite.title)
     } else if (state.artist && state.title) {
-      $('.now-playing').text(state.artist + " - " + state.title)
+      $('.now-playing .title').text(state.artist + " - " + state.title)
     }
   }
 
@@ -75,8 +81,8 @@
 
     let $selected = state.currentFavorite && favoriteFromDom(state.currentFavorite.title)
 
-    $selected && state.playing && $selected.append(eq)
-    $selected && $selected.addClass('selected')
+    state.playing && $('.now-playing').append(eq)
+    state.currentFavorite && favoriteFromDom(state.currentFavorite.title) && $selected.addClass('selected')
     nowPlaying(state)
   })
 
