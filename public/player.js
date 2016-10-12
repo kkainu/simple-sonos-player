@@ -30,26 +30,23 @@
     .onValue(() => {
     })
 
-  const selectFavoriteE = $('ul').asEventStream('click', '.favorite')
+  const clickFavoriteE = $('ul').asEventStream('click', '.favorite')
     .map($target)
     .doAction(t => t.append(spinner))
-    .doAction(t => {
-      $('.favorite').removeClass('selected')
-      t.addClass('selected')
-      $('.eq').remove()
-    })
     .map(t => t.text())
-    .flatMapLatest(favorite => ajax('/Alakerta/favorite/' + favorite))
+
+  const selectFavoriteE = clickFavoriteE.flatMapLatest(favorite => ajax('/Alakerta/favorite/' + favorite)).onValue(() => {})
 
   const clickPlayE = $('.play-pause').asEventStream('click')
     .map($target)
     .map(t => !t.hasClass('pause'))
-    .flatMapLatest(play => ajax('/Alakerta/' + (play ? 'play' : 'pause')))
 
-  const serverMessages = Bacon.fromBinder(sink => ws.on('message', message => sink(message))).log()
+  const sendPlayE = clickPlayE.flatMapLatest(play => ajax('/Alakerta/' + (play ? 'play' : 'pause'))).onValue(() => {})
+
+  const serverMessages = Bacon.fromBinder(sink => ws.on('message', message => sink(message)))
 
   const serverStateP = favoritesE.flatMap(() => ajax('/Alakerta/state'))
-    .concat(selectFavoriteE.merge(clickPlayE).merge(serverMessages)
+    .concat(clickFavoriteE.merge(clickPlayE).merge(serverMessages)
       .flatMapLatest(() => ajax('/Alakerta/state'))
     ).combine(favoritesE, (state, favorites) => ({
       playing: state.playbackState === "PLAYING",
@@ -70,12 +67,12 @@
     $('#favorites').html(favorites.map(favorite => $('<li class="favorite" />').text(favorite.title)))
   })
 
-  serverStateP.onValue( state => {
+  serverStateP.onValue(state => {
     $('.play-pause').toggleClass('pause', state.playing)
     $('.favorite').removeClass('selected')
     $('.spinner').remove()
     $('.eq').remove()
-    
+
     let $selected = state.currentFavorite && favoriteFromDom(state.currentFavorite.title)
 
     $selected && state.playing && $selected.append(eq)
