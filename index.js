@@ -11,4 +11,4 @@ app.post('/sonos-webhook', (req, res) => {
 })
 
 server.listen(3000)
-
+console.log('server started at localhost:3000')
